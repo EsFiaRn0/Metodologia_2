@@ -10,6 +10,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdbool.h>
+#include <time.h>
+#include <sys/time.h>
 
 #define MAXN 1005
 #define ALPH 26
@@ -137,23 +139,47 @@ char* LongestSubsequenceRepeatedK(const char *s, int k) {
     ---------------------------------------------------------
 */
 int main(int argc, char *argv[]) {
-    if (argc != 3) {
-        printf("Uso: %s \"cadena\" k\n", argv[0]);
-        printf("Ejemplo: %s \"ababab\" 2\n", argv[0]);
+
+    if (argc != 4) {
+        printf("Uso: %s \"cadena\" k [-V|-S]\n", argv[0]);
+        printf("  -V : Verboso\n");
+        printf("  -S : Silencioso (solo tiempo)\n");
         return 1;
     }
 
     const char *s = argv[1];
     int k = atoi(argv[2]);
+    const char *mode = argv[3];
 
     if (k <= 0) {
         printf("Error: k debe ser un entero positivo.\n");
         return 1;
     }
 
-    char *ans = LongestSubsequenceRepeatedK(s, k);
-    printf("Subsecuencia mas larga repetida %d veces: %s\n", k, ans);
-    free(ans);
+    if (!(strcmp(mode, "-V") == 0 || strcmp(mode, "-S") == 0)) {
+        printf("Error: modo debe ser -V o -S\n");
+        return 1;
+    }
 
+    struct timeval start, end;
+    gettimeofday(&start, NULL);
+
+    char *ans = LongestSubsequenceRepeatedK(s, k);
+
+    gettimeofday(&end, NULL);
+
+    double wall = (end.tv_sec - start.tv_sec) +
+                  (end.tv_usec - start.tv_usec) / 1000000.0;
+
+    if (strcmp(mode, "-V") == 0) {
+        printf("Cadena: %s ", s);
+        printf("k: %d ", k);
+        printf("Resultado: %s ", ans);
+        printf("Wall time: %.6f s\n", wall);
+    } else {
+        printf("%.6f\n", wall);
+    }
+
+    free(ans);
     return 0;
 }
