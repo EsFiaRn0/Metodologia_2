@@ -1,12 +1,12 @@
 #!/bin/bash
 
-echo "[Etapa 1] Compilando programas"
+echo "[Etapa 1] Compilando"
 gcc t1.c -O0 -o prog_O0
 gcc t1.c -O1 -o prog_O1
 gcc t1.c -O2 -o prog_O2
 gcc t1.c -O3 -o prog_O3
 
-echo "[Etapa 2] Iniciando experimento completo"
+echo "[Etapa 2] Ejecutando experimento"
 
 OUTPUT="resultados.csv"
 echo "opt,escenario,n,k,test_id,tiempo,energy_cores,energy_ram" > $OUTPUT
@@ -14,8 +14,8 @@ echo "opt,escenario,n,k,test_id,tiempo,energy_cores,energy_ram" > $OUTPUT
 OPTS=("O0" "O1" "O2" "O3")
 
 for opt in "${OPTS[@]}"; do
-    echo "[Etapa 3] Ejecutando tests con $opt"
     EXEC="./prog_$opt"
+    echo "[Etapa 3] Optimizacion $opt"
 
     for esc in A B C; do
         echo "  Escenario $esc"
@@ -38,7 +38,8 @@ for opt in "${OPTS[@]}"; do
                 start=$(date +%s.%N)
                 $EXEC "$cadena" "$k" -S > /dev/null
                 end=$(date +%s.%N)
-                tiempo=$(echo "$end - $start" | bc)
+
+                tiempo=$(awk -v s="$start" -v e="$end" 'BEGIN{print e-s}')
 
                 perf_output=$(perf stat -e power/energy-cores/,power/energy-ram/ $EXEC "$cadena" "$k" -S 2>&1 > /dev/null)
 
@@ -54,5 +55,4 @@ for opt in "${OPTS[@]}"; do
     done
 done
 
-echo "[Etapa 4] Experimento completado"
-echo "Resultados guardados en resultados.csv"
+echo "[Etapa 4] Terminado"
