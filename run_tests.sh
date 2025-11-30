@@ -1,43 +1,58 @@
 #!/bin/bash
 
-# ================================
-# Compilar t1.c
-# ================================
-echo "Compilando t1.c..."
-gcc t1.c -o t1
-if [ $? -ne 0 ]; then
-    echo "Error: Falló la compilación."
-    exit 1
-fi
-echo "Compilación completada correctamente."
-echo
+echo "[Etapa 1] Compilando programas"
+gcc t1.c -O0 -o prog_O0
+gcc t1.c -O1 -o prog_O1
+gcc t1.c -O2 -o prog_O2
+gcc t1.c -O3 -o prog_O3
 
-# ================================
-# Ejecutar los tests
-# ================================
-INPUT_FILE="leetcode_longest_subseq_tests1.txt"
-OUTPUT_FILE="resultados.txt"
+echo "[Etapa 2] Iniciando experimento completo"
 
-# Borrar archivo de salida si existe
-[ -f "$OUTPUT_FILE" ] && rm "$OUTPUT_FILE"
+OUTPUT="resultados.csv"
+echo "opt,escenario,n,k,test_id,tiempo,energy_cores,energy_ram" > $OUTPUT
 
-echo "Ejecutando los test cases..."
-counter=0
+OPTS=("O0" "O1" "O2" "O3")
 
-# Leer archivo línea por línea tomando dos campos por línea
-while read -r A B; do
-    counter=$((counter + 1))
+for opt in "${OPTS[@]}"; do
+    echo "[Etapa 3] Ejecutando tests con $opt"
+    EXEC="./prog_$opt"
 
-    # Mostrar progreso cada 5 líneas
-    if (( counter % 5 == 0 )); then
-        echo "Progreso: $counter"
-    fi
+    for esc in A B C; do
+        echo "  Escenario $esc"
 
-    # Ejecutar el programa y guardar solo el tiempo
-    ./t1 "$A" "$B" -S >> "$OUTPUT_FILE"
+        for n in 100 200 300 400; do
 
-done < "$INPUT_FILE"
+            case $n in
+                100) k=20 ;;
+                200) k=30 ;;
+                300) k=50 ;;
+                400) k=60 ;;
+            esac
 
-echo
-echo "Todos los test completados."
-echo "Resultados guardados en $OUTPUT_FILE."
+            archivo="tests/$esc/n$n/tests.txt"
+            test_id=1
+
+            while IFS= read -r linea; do
+                cadena=$(echo "$linea" | cut -d '"' -f2)
+
+                start=$(date +%s.%N)
+                $EXEC "$cadena" "$k" -S > /dev/null
+                end=$(date +%s.%N)
+                tiempo=$(echo "$end - $start" | bc)
+
+                perf_output=$(perf stat -e power/energy-cores/,power/energy-ram/ $EXEC "$cadena" "$k" -S 2>&1 > /dev/null)
+
+                energy_cores=$(echo "$perf_output" | grep "energy-cores" | awk '{print $1}')
+                energy_ram=$(echo "$perf_output" | grep "energy-ram" | awk '{print $1}')
+
+                echo "$opt,$esc,$n,$k,$test_id,$tiempo,$energy_cores,$energy_ram" >> $OUTPUT
+
+                test_id=$((test_id+1))
+            done < "$archivo"
+
+        done
+    done
+done
+
+echo "[Etapa 4] Experimento completado"
+echo "Resultados guardados en resultados.csv"

@@ -133,7 +133,7 @@ char* LongestSubsequenceRepeatedK(const char *s, int k) {
 }
 /*
     ---------------------------------------------------------
-    Descripción: Punto de entrada del programa.
+    Descripción: Main
     Entrada: Argumentos de línea de comandos -> cadena 's' y entero 'k'.
     Salida: Imprime la subsecuencia más larga repetida 'k' veces.
     ---------------------------------------------------------
